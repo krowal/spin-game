@@ -1,0 +1,10 @@
+{
+    "symbols":[
+        {"key":"SYM1", "name":"Wild"},
+        {"key":"SYM3", "name":"Strawberry"},
+        {"key":"SYM4", "name":"Pineapple"},
+        {"key":"SYM5", "name":"Lemon"},
+        {"key":"SYM6", "name":"Watermelon"},
+        {"key":"SYM7", "name":"Grapes"}
+    ]
+}
