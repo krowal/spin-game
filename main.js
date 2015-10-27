@@ -1,5 +1,11 @@
 (function()
 {
+    this.symbols = {};
+
+    var $ = function(id){
+        return document.getElementById(id);
+    };
+
     var Renderer = new (function(_context)
     {
 
@@ -7,24 +13,43 @@
 
     var Game = new (function(_context)
     {
+        this.onChoiceChange = function(c)
+        {
+            var val = c.target.value;
+            var img = _context.symbols[val].img;
+            _context.DOM.choice.symbol.innerHTML = "";
+
+            _context.DOM.choice.symbol.appendChild(
+                img
+            );
+
+            img.classList.add("pop-in");
+        };
+
         this.start = function()
         {
-            console.log(_context.elements.choice.value);
-        }
+            console.log(_context.DOM.choice.select.value);
+        };
     })(this);
 
     this.init = function()
     {
-        this.elements = {
-            overlay:    document.getElementById("overlay"),
-            choice:     document.getElementById("choice"),
-            canvas:     document.getElementById("canvas"),
-            spinButton: document.getElementById("spinButton")
+        this.DOM = {
+            overlay: $("overlay"),
+            choice: {
+                select: $("choice"),
+                label: $("choice_label"),
+                symbol: $("choice_symbol")
+            },
+            canvas: $("canvas"),
+            spinButton: $("spinButton")
         };
+
+        this.DOM.choice.select.addEventListener('change', Game.onChoiceChange);
 
         var fillOptions = function(options)
         {
-            var choiceNode = this.elements.choice;
+            var choiceNode = this.DOM.choice.select;
             for(var i in options)
             {
                 var opt = options[i];
@@ -73,15 +98,18 @@
 
         var initSymbols = function(list)
         {
-            this.symbols = list;
+            for(var i=0; i < list.length; i++)
+            {
+                this.symbols[list[i].key] = list[i];
+            }
+
             fillOptions(this.symbols);
             fetchImages(this.symbols, function()
             {
-                this.elements.overlay.className += " fading-out";
+                this.DOM.overlay.className += " fading-out";
                 setTimeout(function(){
-                    this.elements.overlay.style.display = "none";
+                    this.DOM.overlay.style.display = "none";
                 }.bind(this), 500);
-                //this.elements.overlay.style.display = "none";
                 Game.start();
             }.bind(this));
         }.bind(this);
@@ -105,4 +133,5 @@
             this.init();
         }.bind(this), false);
 })();
+
 
