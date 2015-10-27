@@ -1,6 +1,7 @@
 (function()
 {
     this.symbols = {};
+    this.images = {};
 
     var $ = function(id){
         return document.getElementById(id);
@@ -8,27 +9,48 @@
 
     var Renderer = new (function(_context)
     {
+        var ctx;
 
+        this.draw = function()
+        {
+            ctx.drawImage(_context.images["SYM1.png"], 0, 0);
+        };
+
+        this.init = function(){
+            ctx = _context.DOM.canvas.getContext('2d');
+            this.draw();
+        };
     })(this);
 
     var Game = new (function(_context)
     {
-        this.onChoiceChange = function(c)
+        this.onChoiceChange = function(e)
         {
-            var val = c.target.value;
-            var img = _context.symbols[val].img;
+            var val = e.target.value;
+            this.symbolPreview(val);
+        };
+
+        this.onSpinClick = function()
+        {
+            //TODO:start spin
+            _context.DOM.spinButton.classList.add('disabled');
+        };
+
+        this.symbolPreview = function(symbol)
+        {
+            var img = _context.symbols[symbol].img;
             _context.DOM.choice.symbol.innerHTML = "";
 
             _context.DOM.choice.symbol.appendChild(
                 img
             );
-
             img.classList.add("pop-in");
         };
 
         this.start = function()
         {
-            console.log(_context.DOM.choice.select.value);
+            this.symbolPreview(_context.DOM.choice.select.value);
+            Renderer.init();
         };
     })(this);
 
@@ -42,10 +64,11 @@
                 symbol: $("choice_symbol")
             },
             canvas: $("canvas"),
-            spinButton: $("spinButton")
+            spinButton: $("spin_button")
         };
 
-        this.DOM.choice.select.addEventListener('change', Game.onChoiceChange);
+        this.DOM.choice.select.addEventListener('change', Game.onChoiceChange.bind(Game));
+        this.DOM.spinButton.addEventListener('touchstart', Game.onSpinClick.bind(Game));
 
         var fillOptions = function(options)
         {
@@ -65,7 +88,6 @@
             var amountToLoad = 0;
             for(var i in list)
             {
-                var symbol = list[i];
                 amountToLoad++;
                 var img = new Image();
                 img.onload = function()
@@ -74,10 +96,11 @@
                     if(amountToLoad == 0)
                         onLoadCallback();
                 };
-                img.src = "img/" + symbol.key + ".png";
-                symbol.img = img;
+                img.src = "img/" + list[i];
+                this.images[list[i]] = img;
             }
-        };
+            console.log(this.images)
+        }.bind(this);
 
         var loadJSON = function(path, callback)
         {
@@ -100,24 +123,26 @@
         {
             for(var i=0; i < list.length; i++)
             {
-                this.symbols[list[i].key] = list[i];
+                var symbol = list[i];
+                symbol.img = this.images[symbol.path];
+                this.symbols[list[i].key] = symbol;
             }
 
             fillOptions(this.symbols);
-            fetchImages(this.symbols, function()
-            {
-                this.DOM.overlay.className += " fading-out";
-                setTimeout(function(){
-                    this.DOM.overlay.style.display = "none";
-                }.bind(this), 500);
-                Game.start();
-            }.bind(this));
         }.bind(this);
 
         loadJSON("images.json", function(data)
         {
-            if(data.symbols)
+            fetchImages(data.images, function(){
                 initSymbols(data.symbols);
+
+                this.DOM.overlay.className += " fading-out";
+                setTimeout(function(){
+                    this.DOM.overlay.style.display = "none";
+                }.bind(this), 500);
+
+                Game.start();
+            }.bind(this));
         });
     };
 

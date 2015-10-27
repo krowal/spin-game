@@ -1,10 +1,15 @@
 {
     "symbols":[
-        {"key":"SYM1", "name":"Wild"},
-        {"key":"SYM3", "name":"Strawberry"},
-        {"key":"SYM4", "name":"Pineapple"},
-        {"key":"SYM5", "name":"Lemon"},
-        {"key":"SYM6", "name":"Watermelon"},
-        {"key":"SYM7", "name":"Grapes"}
+        {"key":"SYM1", "name":"Wild", "path":"SYM1.png"},
+        {"key":"SYM3", "name":"Strawberry", "path": "SYM3.png"},
+        {"key":"SYM4", "name":"Pineapple", "path": "SYM4.png"},
+        {"key":"SYM5", "name":"Lemon", "path": "SYM5.png"},
+        {"key":"SYM6", "name":"Watermelon", "path": "SYM6.png"},
+        {"key":"SYM7", "name":"Grapes", "path": "SYM7.png"}
+    ],
+
+    "images":[
+        "SYM1.png", "SYM3.png", "SYM4.png", "SYM5.png", "SYM6.png", "SYM7.png",
+        "BTN_Spin.png", "BTN_Spin_d.png"
     ]
 }
