@@ -1,19 +1,38 @@
 (function()
 {
-    this.symbols = {};
     this.images = {};
+    this.symbols = [];
+
+    var s_amount = 0;
 
     var $ = function(id){
         return document.getElementById(id);
     };
 
+    /**
+     * Rendering game objects in canvas element
+     */
     var Renderer = new (function(_context)
     {
         var ctx;
 
-        this.draw = function()
+        this.draw = function(_game)
         {
-            ctx.drawImage(_context.images["SYM1.png"], 0, 0);
+            var canvas = _context.DOM.canvas;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            var idx = Math.floor(_game.getSpinPosition() / 155);
+            var drawElements = [
+                _context.symbols[idx],
+                _context.symbols[(idx+1) > (_context.symbols.length-1) ? 0 : (idx+1)]
+            ];
+
+            for(var i = 0; i < drawElements.length; i++)
+            {
+                var offsetTop = i * 155 - _game.getSpinPosition() % 155;
+                var img = _context.images[drawElements[i].path];
+                ctx.drawImage(img, 0, 0, 235, 155, 0, offsetTop, 235, 155);
+            }
         };
 
         this.init = function(){
@@ -23,7 +42,20 @@
 
     var Game = new (function(_context)
     {
-        var spinning = false;
+        var spinning = false,
+            spinPosition = 0,
+            spinStartTime = null,
+            spinTarget = null,
+            startOffset = 0,
+            spinLength = null,
+            win = false,
+            spinTime = 3000; //time of spin in ms
+
+
+        this.getSpinPosition = function()
+        {
+            return spinPosition % (_context.symbols.length * 155);
+        };
 
         this.onChoiceChange = function(e)
         {
@@ -33,12 +65,14 @@
 
         this.onSpinClick = function()
         {
-            //TODO:start spin
             if(!spinning)
             {
+                _context.sound.hit.play();
                 _context.DOM.spinButton.classList.add('disabled');
                 _context.DOM.choice.select.disabled = true;
-                spinning = true;
+
+                spinTarget = Math.floor((Math.random() * symbols.length));
+                win = _context.DOM.choice.select.value == _context.symbols[spinTarget].key;
 
                 this.startSpin();
             }
@@ -46,17 +80,33 @@
 
         this.startSpin = function()
         {
-
+            spinning = true;
+            spinStartTime = (new Date()).getTime();
+            startOffset = spinPosition % (_context.symbols.length * 155);
+            spinLength = (spinTarget * 155) + (3 * (_context.symbols.length * 155)) - startOffset;
+            _context.sound.roll.play();
         };
 
         this.endSpin = function()
         {
+            spinning = false;
+            _context.DOM.spinButton.classList.remove('disabled');
+            _context.DOM.choice.select.disabled = false;
 
+            _context.sound.roll.pause();
+            _context.sound.roll.currentTime = 0;
+            if(win)
+            {
+                _context.sound.win.play();
+            }else
+            {
+                _context.sound.lost.play();
+            }
         };
 
         this.symbolPreview = function(symbol)
         {
-            var img = _context.symbols[symbol].img;
+            var img = _context.symbols.find(function(e){return e.key == symbol}).img;
             _context.DOM.choice.symbol.innerHTML = "";
 
             _context.DOM.choice.symbol.appendChild(
@@ -65,27 +115,26 @@
             img.classList.add("pop-in");
         };
 
-        this.getCurrentChoice = function()
+        this.update = function()
         {
-            return _context.symbols[_context.DOM.choice.select.value];
+            if(!spinning) return false;
+
+            var timePassed = ((new Date()).getTime() - spinStartTime) / spinTime;
+            if(timePassed >= 1)
+            {
+                timePassed = 1;
+                this.endSpin();
+            }
+            spinPosition = startOffset + timePassed * spinLength;
+            Renderer.draw(this);
+
+            if(timePassed >= 1) startOffset = spinPosition % (_context.symbols.length * 155);
         };
-
-        this.update = function(dt)
-        {
-
-            Renderer.draw();
-        };
-
-        var then = new Date(),
-            now = new Date(),
-            delta;
 
         this.tick = function(){
-            requestAnimationFrame(this.tick);
-
-            delta = now.getTime() - then.getTime();
-            then = now;
-            now = new Date();
+            requestAnimationFrame(function(){
+                this.tick()
+            }.bind(this));
 
             this.update();
         };
@@ -96,9 +145,18 @@
             Renderer.init();
 
             this.tick();
+            Renderer.draw(this);
         };
     })(this);
 
+    var createSound = function(path, loop)
+    {
+        var sound = document.createElement('audio');
+        sound.src = path;
+        if(loop) sound.loop = true;
+
+        return sound;
+    };
 
     /**
      * Initializing html elements events listeners,
@@ -118,8 +176,15 @@
             spinButton: $("spin_button")
         };
 
+        this.sound = {
+            roll: createSound("sound/roll.wav", true),
+            hit: createSound("sound/start.wav"),
+            win: createSound("sound/win.wav"),
+            lost: createSound("sound/lost.wav")
+        };
+
         this.DOM.choice.select.addEventListener('change', Game.onChoiceChange.bind(Game));
-        this.DOM.spinButton.addEventListener('touchstart', Game.onSpinClick.bind(Game));
+        this.DOM.spinButton.addEventListener('click', Game.onSpinClick.bind(Game));
 
         var fillOptions = function(options)
         {
@@ -150,7 +215,6 @@
                 img.src = "img/" + list[i];
                 this.images[list[i]] = img;
             }
-            console.log(this.images)
         }.bind(this);
 
         var loadJSON = function(path, callback)
@@ -172,11 +236,12 @@
 
         var initSymbols = function(list)
         {
+            s_amount = list.length;
             for(var i=0; i < list.length; i++)
             {
                 var symbol = list[i];
                 symbol.img = this.images[symbol.path];
-                this.symbols[list[i].key] = symbol;
+                this.symbols.push(symbol);
             }
 
             fillOptions(this.symbols);
