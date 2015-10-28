@@ -95,13 +95,27 @@
 
             _context.sound.roll.pause();
             _context.sound.roll.currentTime = 0;
+
+            _context.DOM.summary.innerHTML = "";
+            var summary = document.createElement("div");
             if(win)
             {
+                summary.innerHTML = "You won!";
+                summary.classList.add("win");
+
+                _context.DOM.summary.appendChild(summary);
                 _context.sound.win.play();
             }else
             {
+                summary.innerHTML = "You lost!";
+                summary.classList.add("lost");
+
+                _context.DOM.summary.appendChild(summary);
                 _context.sound.lost.play();
             }
+            setTimeout(function(){
+                _context.DOM.summary.innerHTML = "";
+            }, 1000);
         };
 
         this.symbolPreview = function(symbol)
@@ -173,7 +187,8 @@
                 symbol: $("choice_symbol")
             },
             canvas: $("canvas"),
-            spinButton: $("spin_button")
+            spinButton: $("spin_button"),
+            summary: $("summary_overlay")
         };
 
         this.sound = {
