@@ -89,6 +89,7 @@ html {
   width: 100%; }
 
 .roll-button {
+  transition: transform 0.3s ease-in-out;
   display: inline-block;
   background-image: url(img/BTN_Spin.png);
   width: 20vw;
@@ -99,6 +100,7 @@ html {
   left: 50%;
   margin: -10vw auto auto -10vw; }
   .roll-button.disabled {
+    transform: rotate(360deg);
     background-image: url(img/BTN_Spin_d.png); }
 
 #canvas {
